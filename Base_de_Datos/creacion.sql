@@ -21,12 +21,16 @@ CREATE TABLE categorias (
     descripcion TEXT
 );
 
--- Tabla de productos
+-- Eliminar la tabla si ya existe (opcional)
+DROP TABLE IF EXISTS productos;
+
+-- Crear tabla productos
 CREATE TABLE productos (
     id SERIAL PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,       -- para búsquedas por código
     nombre VARCHAR(150) NOT NULL,
     descripcion TEXT,
-    precio NUMERIC(10,2) NOT NULL,
+    precio DOUBLE PRECISION NOT NULL,
     stock INTEGER NOT NULL CHECK (stock >= 0),
-    categoria_id INTEGER REFERENCES categorias(id)
+    categoria_id INTEGER NOT NULL REFERENCES categorias(id)
 );
