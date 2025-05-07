@@ -115,3 +115,29 @@ BEGIN
     UPDATE productos SET stock = 0 WHERE codigo = cod;
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION listar_productos()
+RETURNS TABLE (
+    codigo VARCHAR,
+    nombre VARCHAR,
+    descripcion TEXT,
+    precio DOUBLE PRECISION,
+    stock INTEGER,
+    categoria TEXT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.codigo,
+        p.nombre,
+        p.descripcion,
+        p.precio,
+        p.stock,
+        c.nombre
+    FROM productos p
+    JOIN categorias c ON p.categoria_id = c.id;
+END;
+$$;
+
