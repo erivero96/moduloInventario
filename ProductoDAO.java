@@ -9,6 +9,7 @@ public class ProductoDAO {
     private static final String URL = "jdbc:postgresql://localhost:5433/inventario";
     private static final String USER = "postgres";
     private static final String PASSWORD = "nuevaclave123";
+
     public boolean insertarProducto(Producto p) {
         String sql = "CALL registrar_producto(?, ?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -29,32 +30,29 @@ public class ProductoDAO {
     }
 
     public boolean actualizarStock(String codigo, int nuevoStock, String motivo, int usuarioId) {
-        String sql = "UPDATE productos SET stock = ? WHERE codigo = ?";
+        String sql = "CALL actualizar_stock(?, ?)";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             CallableStatement stmt = conn.prepareCall(sql)) {
 
-            stmt.setInt(1, nuevoStock);
-            stmt.setString(2, codigo);
-            int rows = stmt.executeUpdate();
+            stmt.setString(1, codigo);
+            stmt.setInt(2, nuevoStock);
+            stmt.execute();
 
-            if (rows > 0) {
-                registrarMovimiento(conn, codigo, nuevoStock, motivo, usuarioId);
-                return true;
-            }
-            return false;
+            registrarMovimiento(conn, codigo, nuevoStock, motivo, usuarioId);
+            return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private void registrarMovimiento(Connection conn, String codigo, int nuevoStock, String motivo, int usuarioId) throws SQLException {
-        String sql = "INSERT INTO movimientos_stock (codigo_producto, fecha, cantidad, motivo, usuario_id) VALUES (?, NOW(), ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    private void registrarMovimiento(Connection conn, String codigo, int cantidad, String motivo, int usuarioId) throws SQLException {
+        String sql = "CALL registrar_movimiento_stock(?, ?, ?, ?)";
+        try (CallableStatement stmt = conn.prepareCall(sql)) {
             stmt.setString(1, codigo);
-            stmt.setInt(2, nuevoStock);
+            stmt.setInt(2, cantidad);
             stmt.setString(3, motivo);
             stmt.setInt(4, usuarioId);
-            stmt.executeUpdate();
+            stmt.execute();
         }
     }
 
@@ -113,12 +111,13 @@ public class ProductoDAO {
     }
 
     public boolean darDeBajaProducto(String codigo) {
-        String sql = "UPDATE productos SET stock = 0 WHERE codigo = ?";
+        String sql = "CALL dar_de_baja_producto(?)";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             CallableStatement stmt = conn.prepareCall(sql)) {
 
             stmt.setString(1, codigo);
-            return stmt.executeUpdate() > 0;
+            stmt.execute();
+            return true;
         } catch (Exception e) {
             return false;
         }
@@ -127,12 +126,12 @@ public class ProductoDAO {
     public static void main(String[] args) {
         ProductoDAO dao = new ProductoDAO();
 
-        Producto producto = new Producto("P107", "Monitor", "Monitor 27 pulgadas", 850.00, 1, 25);
+        Producto producto = new Producto("P108111", "Monitor", "Monitor 27 pulgadas", 850.00, 1, 25);
 
         boolean insertado = dao.insertarProducto(producto);
         System.out.println("Insertado: " + insertado);
 
-        boolean actualizado = dao.actualizarStock("P100", 30, "Reposición", 1);
+        boolean actualizado = dao.actualizarStock("P108111", 30, "Reposición", 1);
         System.out.println("Stock actualizado: " + actualizado);
 
         List<Producto> buscados = dao.buscarProductos("Monitor");
@@ -145,7 +144,7 @@ public class ProductoDAO {
             System.out.println("Listado: " + p);
         }
 
-        boolean baja = dao.darDeBajaProducto("P100");
+        boolean baja = dao.darDeBajaProducto("P108111");
         System.out.println("Dado de baja: " + baja);
     }
 }
