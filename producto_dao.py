@@ -28,17 +28,24 @@ class ProductoDAO:
                     cur.execute("CALL registrar_producto(%s, %s, %s, %s, %s, %s)", 
                                 (producto.codigo, producto.nombre, producto.descripcion, producto.precio, producto.categoria, producto.stock))
             return True
-        except Exception:
+        except psycopg2.Error as e:
+            print(f"Error al insertar producto: {e}")
             return False
 
     def actualizar_stock(self, codigo, nuevo_stock, motivo, usuario_id):
         try:
+            if nuevo_stock < 0:
+                raise ValueError("El stock no puede ser negativo.")
             with psycopg2.connect(self.URL) as conn:
                 with conn.cursor() as cur:
                     cur.execute("CALL actualizar_stock(%s, %s)", (codigo, nuevo_stock))
                     cur.execute("CALL registrar_movimiento_stock(%s, %s, %s, %s)", (codigo, nuevo_stock, motivo, usuario_id))
             return True
-        except Exception:
+        except psycopg2.Error as e:
+            print(f"Error al actualizar stock: {e}")
+            return False
+        except ValueError as ve:
+            print(ve)
             return False
 
     def listar_productos(self):
@@ -52,8 +59,8 @@ class ProductoDAO:
                     """)
                     for row in cur.fetchall():
                         productos.append(Producto(row[0], row[1], row[2], row[3], row[5], row[4]))
-        except Exception:
-            pass
+        except psycopg2.Error as e:
+            print(f"Error al listar productos: {e}")
         return productos
 
     def dar_de_baja_producto(self, codigo):
@@ -62,7 +69,8 @@ class ProductoDAO:
                 with conn.cursor() as cur:
                     cur.execute("CALL dar_de_baja_producto(%s)", (codigo,))
             return True
-        except Exception:
+        except psycopg2.Error as e:
+            print(f"Error al dar de baja producto: {e}")
             return False
 
 # ----- APLICACIÓN -----
@@ -103,8 +111,12 @@ class InventarioApp:
         ttk.Button(frame, text="Iniciar sesión", command=self.verificar_credenciales).grid(row=2, column=0, columnspan=2, pady=20)
 
     def verificar_credenciales(self):
-        correo = self.correo_entry.get()
-        clave = self.clave_entry.get()
+        correo = self.correo_entry.get().strip()
+        clave = self.clave_entry.get().strip()
+
+        if not correo or not clave:
+            messagebox.showerror("Error", "Todos los campos son obligatorios")
+            return
 
         try:
             conn = psycopg2.connect(ProductoDAO.URL)
@@ -116,8 +128,8 @@ class InventarioApp:
                     self.build_menu()
                 else:
                     messagebox.showerror("Error", "Credenciales incorrectas")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+        except psycopg2.Error as e:
+            messagebox.showerror("Error", f"Error de conexión: {e}")
 
     def build_menu(self):
         self.clear_window()
@@ -153,19 +165,32 @@ class InventarioApp:
 
     def registrar_producto(self):
         try:
+            codigo = self.codigo_entry.get().strip()
+            nombre = self.nombre_entry.get().strip()
+            descripcion = self.descripcion_entry.get().strip()
+            precio = self.precio_entry.get().strip()
+            categoria = self.categoria_entry.get().strip()
+            stock = self.stock_entry.get().strip()
+
+            if not codigo or not nombre or not descripcion or not precio or not categoria or not stock:
+                messagebox.showerror("Error", "Todos los campos son obligatorios")
+                return
+
             producto = Producto(
-                self.codigo_entry.get(),
-                self.nombre_entry.get(),
-                self.descripcion_entry.get(),
-                float(self.precio_entry.get()),
-                int(self.categoria_entry.get()),
-                int(self.stock_entry.get())
+                codigo,
+                nombre,
+                descripcion,
+                float(precio),
+                int(categoria),
+                int(stock)
             )
             if self.dao.insertar_producto(producto):
                 messagebox.showinfo("Éxito", "Producto registrado")
                 self.build_menu()
             else:
                 messagebox.showerror("Error", "No se pudo registrar")
+        except ValueError:
+            messagebox.showerror("Error", "Datos inválidos. Verifique los campos.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -185,14 +210,24 @@ class InventarioApp:
 
     def actualizar_stock(self):
         try:
+            codigo = self.codigo_stock.get().strip()
+            nuevo_stock = self.nuevo_stock.get().strip()
+            motivo = self.motivo.get().strip()
+
+            if not codigo or not nuevo_stock or not motivo:
+                messagebox.showerror("Error", "Todos los campos son obligatorios")
+                return
+
             resultado = self.dao.actualizar_stock(
-                self.codigo_stock.get(), int(self.nuevo_stock.get()), self.motivo.get(), self.usuario_id
+                codigo, int(nuevo_stock), motivo, self.usuario_id
             )
             if resultado:
                 messagebox.showinfo("Éxito", "Stock actualizado")
                 self.build_menu()
             else:
                 messagebox.showerror("Error", "No se pudo actualizar")
+        except ValueError:
+            messagebox.showerror("Error", "El stock debe ser un número válido.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -203,8 +238,11 @@ class InventarioApp:
 
         ttk.Label(frame, text="Productos", font=("Segoe UI", 16, "bold")).pack(pady=10)
         productos = self.dao.listar_productos()
-        for p in productos:
-            ttk.Label(frame, text=str(p), font=("Segoe UI", 10)).pack(anchor="w", padx=10)
+        if not productos:
+            ttk.Label(frame, text="No hay productos registrados.", font=("Segoe UI", 10)).pack(anchor="w", padx=10)
+        else:
+            for p in productos:
+                ttk.Label(frame, text=str(p), font=("Segoe UI", 10)).pack(anchor="w", padx=10)
         ttk.Button(frame, text="Volver", command=self.build_menu).pack(pady=10)
 
     def build_dar_de_baja(self):
@@ -220,7 +258,12 @@ class InventarioApp:
 
     def dar_de_baja_producto(self):
         try:
-            resultado = self.dao.dar_de_baja_producto(self.codigo_baja.get())
+            codigo = self.codigo_baja.get().strip()
+            if not codigo:
+                messagebox.showerror("Error", "El código del producto es obligatorio")
+                return
+
+            resultado = self.dao.dar_de_baja_producto(codigo)
             if resultado:
                 messagebox.showinfo("Éxito", "Producto dado de baja")
             else:
