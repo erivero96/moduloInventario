@@ -27,7 +27,7 @@ public class InventarioDao {
                 throw new IllegalArgumentException("El código del producto no debe tener más de 4 dígitos.");
             }
             if (!String.valueOf(codigo).matches("\\d+")) {
-                
+                throw new IllegalArgumentException("El código del producto debe contener solo números.");
             }
             boolean estadoActual = obtenerEstadoProducto(codigo);
             if (estadoActual == estado) {
