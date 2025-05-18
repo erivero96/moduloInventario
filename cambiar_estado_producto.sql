@@ -8,5 +8,9 @@ BEGIN
     UPDATE productos
     SET estado = p_estado
     WHERE codigo = p_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Producto con código % no encontrado.', p_id;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
