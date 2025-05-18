@@ -1,7 +1,11 @@
-CREATE OR REPLACE FUNCTION cambiar_estado_producto(p_id INTEGER, p_estado BOOLEAN)
-RETURNS VOID AS $$
+CREATE OR REPLACE PROCEDURE cambiar_estado_producto(
+    IN p_id INTEGER,
+    IN p_estado BOOLEAN
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
-    IF p_estado IS NOT TRUE AND p_estado IS NOT FALSE THEN
+    IF p_estado IS DISTINCT FROM TRUE AND p_estado IS DISTINCT FROM FALSE THEN
         RAISE EXCEPTION 'Estado inválido: solo se permite TRUE o FALSE';
     END IF;
 
@@ -13,4 +17,4 @@ BEGIN
         RAISE EXCEPTION 'Producto con código % no encontrado.', p_id;
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$;
