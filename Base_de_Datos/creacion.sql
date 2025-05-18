@@ -4,12 +4,6 @@ CREATE DATABASE inventario;
 -- Conectarse a la base de datos
 \c inventario;
 
--- Crear la base de datos
-CREATE DATABASE inventario;
-
--- Conectarse a la base de datos
-\c inventario;
-
 -- Crear tablas
 
 CREATE TABLE public.categorias (
@@ -19,7 +13,7 @@ CREATE TABLE public.categorias (
 );
 
 CREATE TABLE public.usuarios (
-    id SERIAL PRIMARY KEY,
+    id CHAR(8) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     correo VARCHAR(150) UNIQUE NOT NULL,
     contraseña VARCHAR(100) NOT NULL,
@@ -28,7 +22,7 @@ CREATE TABLE public.usuarios (
 );
 
 CREATE TABLE public.productos (
-    codigo VARCHAR(50) PRIMARY KEY,
+    codigo SERIAL PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
     descripcion TEXT,
     precio DOUBLE PRECISION NOT NULL,
@@ -39,11 +33,10 @@ CREATE TABLE public.productos (
 );
 
 CREATE TABLE public.movimientos_stock (
-    id SERIAL PRIMARY KEY,
-    codigo_producto VARCHAR(50) REFERENCES productos(codigo),
+    id CHAR(5) PRIMARY KEY,
+    codigo_producto INTEGER REFERENCES productos(codigo),
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cantidad INTEGER NOT NULL,
     motivo TEXT,
-    usuario_id INTEGER REFERENCES usuarios(id)
+    usuario_id CHAR(8) REFERENCES usuarios(id)
 );
-
