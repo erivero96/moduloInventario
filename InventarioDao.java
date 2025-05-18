@@ -19,24 +19,72 @@ public class InventarioDao {
     }
 
     public void cambiarEstadoProducto(int codigo, boolean estado) {
-        String sql = "SELECT cambiar_estado_producto(?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, codigo);
-            statement.setBoolean(2, estado);
-            statement.executeQuery();
+        try {
+            if (codigo <= 0) {
+                throw new IllegalArgumentException("El código del producto debe ser un número positivo.");
+            }
+            if (String.valueOf(codigo).length() > 4) {
+                throw new IllegalArgumentException("El código del producto no debe tener más de 4 dígitos.");
+            }
+            if (!String.valueOf(codigo).matches("\\d+")) {
+                
+            }
+            boolean estadoActual = obtenerEstadoProducto(codigo);
+            if (estadoActual == estado) {
+                throw new IllegalArgumentException("El estado ya es el mismo. No se realizaron cambios.");
+            }
+            if (!String.valueOf(codigo).trim().equals(String.valueOf(codigo))) {
+                throw new IllegalArgumentException("El código contiene espacios no permitidos.");
+            }
+            if (codigo > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("El código excede el valor permitido.");
+            }
+            if (estado != true && estado != false) {
+                throw new IllegalArgumentException("El estado debe ser verdadero o falso.");
+            }
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
+
+        String sql = "CALL cambiar_estado_producto(?, ?)";
+        try (CallableStatement stmt = connection.prepareCall(sql)) {
+            stmt.setInt(1, codigo);
+            stmt.setBoolean(2, estado);
+            stmt.execute();
         } catch (SQLException e) {
             if (e.getMessage().contains("Producto con código")) {
                 System.out.println("false");
-                System.err.println("Producto no encontrado: código " + codigo );
+                System.err.println("\u001B[31mProducto no encontrado: código " + codigo + "\u001B[0m");
             } else {
-                System.err.println("Error al cambiar el estado del producto");
+                System.err.println("\u001B[31mError al cambiar el estado del producto\u001B[0m");
             }
         }
     }
 
 
-
     public boolean obtenerEstadoProducto(int codigo) {
+        try {
+            if (codigo <= 0) {
+                throw new IllegalArgumentException("El código del producto debe ser un número positivo.");
+            }
+            if (String.valueOf(codigo).length() > 4) {
+                throw new IllegalArgumentException("El código del producto no debe tener más de 4 dígitos.");
+            }
+            if (!String.valueOf(codigo).matches("\\d+")) {
+                throw new IllegalArgumentException("El código del producto debe contener solo números.");
+            }
+            if (!String.valueOf(codigo).trim().equals(String.valueOf(codigo))) {
+                throw new IllegalArgumentException("El código contiene espacios no permitidos.");
+            }
+            if (codigo > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("El código excede el valor permitido.");
+            }
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            throw e;
+        }
         String sql = "CALL obtener_estado_producto(?, ?)";
         try (CallableStatement stmt = connection.prepareCall(sql)) {
             stmt.setInt(1, codigo); // IN: código del producto
@@ -56,7 +104,4 @@ public class InventarioDao {
             throw new RuntimeException("Error al obtener el estado del producto", e);
         }
     }
-
-
-    
 }
