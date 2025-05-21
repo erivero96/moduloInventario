@@ -7,11 +7,15 @@ public class InventarioDAO {
 
     private Connection conn;
 
-    public InventarioDAO(Connection conn) {
-        this.conn = conn;
-    }
-    //RF 02
-    public void actualizarStock(int codigoProducto, int cantidad, String motivo, String usuarioId, String movId) throws SQLException {
+    public void actualizarStock(Producto producto, int cantidad, String motivo, String usuarioId, String movId) throws SQLException {
+        int codigoProducto;
+
+        try {
+            codigoProducto = Integer.parseInt(producto.codigo);
+        } catch (NumberFormatException e) {
+            throw new CodigoProductoInvalidoException("El código del producto no es un número válido.");
+        }
+
         if (codigoProducto <= 0) {
             throw new CodigoProductoInvalidoException();
         }
@@ -30,9 +34,9 @@ public class InventarioDAO {
 
         String sql = "{ CALL registrar_movimiento_stock(?, ?, ?, ?, ?) }";
         try (CallableStatement stmt = conn.prepareCall(sql)) {
-            stmt.setInt(1, movId);
+            stmt.setString(1, movId);
             stmt.setInt(2, codigoProducto);
-            stmt.setString(3, cantidad);
+            stmt.setInt(3, cantidad);
             stmt.setString(4, motivo);
             stmt.setString(5, usuarioId);
 
