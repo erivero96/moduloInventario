@@ -43,4 +43,57 @@ public class InventarioDAO {
             stmt.execute();
         }
     }
+    public List<MovimientoStock> listarMovimientosPorProducto(Producto producto) throws SQLException {
+        List<MovimientoStock> movimientos = new ArrayList<>();
+
+        try (CallableStatement stmt = conn.prepareCall("{ call listar_movimientos_por_producto(?, ?) }")) {
+            stmt.setInt(1, Integer.parseInt(producto.codigo));
+            stmt.registerOutParameter(2, java.sql.Types.OTHER);
+
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(2)) {
+                while (rs.next()) {
+                    MovimientoStock mov = new MovimientoStock(
+                            rs.getString("id"),
+                            rs.getInt("codigo_producto"),
+                            rs.getTimestamp("fecha").toLocalDateTime(),
+                            rs.getInt("cantidad"),
+                            rs.getString("motivo"),
+                            rs.getString("usuario_id")
+                    );
+                    movimientos.add(mov);
+                }
+            }
+        }
+
+        return movimientos;
+    }
+
+    public List<MovimientoStock> listarMovimientosPorUsuario(Usuario usuario) throws SQLException {
+        List<MovimientoStock> movimientos = new ArrayList<>();
+
+        try (CallableStatement stmt = conn.prepareCall("{ call listar_movimientos_por_usuario(?, ?) }")) {
+            stmt.setString(1, usuario.id);
+            stmt.registerOutParameter(2, java.sql.Types.OTHER);
+
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(2)) {
+                while (rs.next()) {
+                    MovimientoStock mov = new MovimientoStock(
+                            rs.getString("id"),
+                            rs.getInt("codigo_producto"),
+                            rs.getTimestamp("fecha").toLocalDateTime(),
+                            rs.getInt("cantidad"),
+                            rs.getString("motivo"),
+                            rs.getString("usuario_id")
+                    );
+                    movimientos.add(mov);
+                }
+            }
+        }
+
+        return movimientos;
+    }
 }
