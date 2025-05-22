@@ -20,6 +20,13 @@ public class Usuario {
         this.fechaRegistro = fechaRegistro;
     }
 
+    // Constructor para login
+    public Usuario(String id, String correo, String rol) {
+        this.id = id;
+        this.correo = correo;
+        this.rol = rol;
+    }
+
     // Getters
     public String getId() {
         return id;

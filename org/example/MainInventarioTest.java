@@ -7,10 +7,16 @@ public class MainInventarioTest {
         InventarioDao dao = new InventarioDao();
 
         try {
+            //Login
+            LoginService loginService = new LoginService(dao.getConnection());
+            String correo = "ana.perez@ucsm.edu.pe";
+            String contraseña = "clave123";
+            System.out.println(loginService.login(correo, contraseña));
+            
             // Crear un nuevo producto
             Producto nuevoProducto = new Producto(
-                1001,                          // Código (usar número corto <= 4 dígitos)
-                "Laptop 111111111",              // Nombre
+                1,                          // Código (usar número corto <= 4 dígitos)
+                "Laptop A111AA1111",              // Nombre
                 "Laptop para oficina",        // Descripción
                 2500.00,                      // Precio
                 20,                           // Stock
@@ -29,14 +35,14 @@ public class MainInventarioTest {
             }
 
             // Cambiar estado del producto
-            dao.cambiarEstadoProducto(1001, false);
+            dao.cambiarEstadoProducto(1, false);
 
             // Verificar nuevo estado
-            boolean estadoNuevo = dao.obtenerEstadoProducto(1001);
-            System.out.println("Nuevo estado del producto 1001: " + estadoNuevo);
+            boolean estadoNuevo = dao.obtenerEstadoProducto(1);
+            System.out.println("Nuevo estado del producto 11: " + estadoNuevo);
 
             // Actualizar stock
-            dao.actualizarStock(nuevoProducto, 5, "Reabastecimiento", "20220001", "M1234");
+            dao.actualizarStock(nuevoProducto, 5, "Reabastecimiento", "20220001", "M1224");
 
             // Listar movimientos por producto
             List<MovimientoStock> movimientos = dao.listarMovimientosPorProducto(nuevoProducto);

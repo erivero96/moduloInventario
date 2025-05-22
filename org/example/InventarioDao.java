@@ -156,7 +156,7 @@ public class InventarioDao {
         }
 
     
-        String sql = "{ CALL registrar_movimiento_stock(?, ?, ?, ?, ?) }";
+        String sql = "CALL registrar_movimiento_stock(?, ?, ?, ?, ?)";
         try (CallableStatement stmt = connection.prepareCall(sql)) {
             stmt.setString(1, movId);
             stmt.setInt(2, codigoProducto);
@@ -186,7 +186,7 @@ public class InventarioDao {
 
         List<MovimientoStock> movimientos = new ArrayList<>();
 
-        try (CallableStatement stmt = connection.prepareCall("{ call listar_movimientos_por_producto(?, ?) }")) {
+        try (CallableStatement stmt = connection.prepareCall("CALL listar_movimientos_por_producto(?, ?)")) {
             stmt.setInt(1, producto.getCodigo());
             stmt.registerOutParameter(2, java.sql.Types.OTHER);
 
@@ -224,7 +224,7 @@ public class InventarioDao {
 
         List<MovimientoStock> movimientos = new ArrayList<>();
     
-        try (CallableStatement stmt = connection.prepareCall("{ call listar_movimientos_por_usuario(?, ?) }")) {
+        try (CallableStatement stmt = connection.prepareCall("CALL listar_movimientos_por_usuario(?, ?)")) {
             stmt.setString(1, usuario.id);
             stmt.registerOutParameter(2, java.sql.Types.OTHER);
     
@@ -474,5 +474,10 @@ public class InventarioDao {
         System.err.println(mensaje + ": " + e.getMessage());
         e.printStackTrace();
     }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
 }
 
