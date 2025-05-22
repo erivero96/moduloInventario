@@ -241,6 +241,19 @@ public class InventarioDao {
         validateStock(producto);
         validateCategoria(producto);
 
+        if (producto.getNombre().length() > 40) {
+            throw new IllegalArgumentException("El nombre no puede exceder los 40 caracteres.");
+        }
+
+        if (String.valueOf(producto.getPrecio()).length() > 6) {
+            throw new IllegalArgumentException("El precio no puede exceder los 6 dígitos.");
+        }
+        
+        if (String.valueOf(producto.getStock()).length() > 5) {
+            throw new IllegalArgumentException("El stock no puede exceder los 5 dígitos.");
+        }
+
+
         if (producto.getNombre().matches(".*[\"'\\p{So}].*")) {
             throw new IllegalArgumentException("El nombre no debe contener comillas ni emojis. \uD83E\uDD23");
         }
@@ -260,6 +273,8 @@ public class InventarioDao {
             cs.execute();
             System.out.println("Producto registrado: " + producto.getNombre());
         }
+
+
     }
 
     public void deleteProduct(String nombreProducto) throws SQLException {
