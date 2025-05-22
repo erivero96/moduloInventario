@@ -43,6 +43,8 @@ public class Producto {
         this.estado = estado;
     }
 
+    public Producto() {};
+
 
 
 

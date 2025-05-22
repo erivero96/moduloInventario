@@ -46,14 +46,8 @@ public class InventarioDao {
             if (codigo > Integer.MAX_VALUE) {
                 throw new IllegalArgumentException("El código excede el valor permitido.");
             }
-            if (estado != true && estado != false) {
-                throw new IllegalArgumentException("El estado debe ser verdadero o falso.");
-            }
-            
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            System.err.println(e.getMessage());
-            return;
+        } catch (IllegalArgumentException e) {
+            throw e;
         }
 
         String sql = "CALL cambiar_estado_producto(?, ?)";
@@ -61,17 +55,14 @@ public class InventarioDao {
             stmt.setInt(1, codigo);
             stmt.setBoolean(2, estado);
             stmt.execute();
-
         } catch (SQLException e) {
             if (e.getMessage().contains("Producto con código")) {
-                System.out.println("false");
-                System.err.println("\u001B[31mProducto no encontrado: código " + codigo + "\u001B[0m");
+                throw new IllegalArgumentException("Producto no encontrado: código " + codigo, e);
             } else {
-                System.err.println("\u001B[31mError al cambiar el estado del producto\u001B[0m");
+                throw new RuntimeException("Error al cambiar el estado del producto", e);
             }
         }
     }
-
 
     public boolean obtenerEstadoProducto(int codigo) {
         try {
@@ -91,9 +82,9 @@ public class InventarioDao {
                 throw new IllegalArgumentException("El código excede el valor permitido.");
             }
         } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
             throw e;
         }
+
         String sql = "CALL obtener_estado_producto(?, ?)";
         try (CallableStatement stmt = connection.prepareCall(sql)) {
             stmt.setInt(1, codigo); // IN: código del producto
@@ -101,15 +92,10 @@ public class InventarioDao {
 
             stmt.execute();
             return stmt.getBoolean(2);
-
         } catch (SQLException e) {
-            String mensaje = e.getMessage();
-            if (mensaje != null && mensaje.contains("Producto con código")) {
-                System.err.println("Producto no encontrado: código " + codigo);
-                return false; // o lanza una excepción personalizada
+            if (e.getMessage() != null && e.getMessage().contains("Producto con código")) {
+                throw new IllegalArgumentException("Producto no encontrado: código " + codigo, e);
             }
-
-            e.printStackTrace();
             throw new RuntimeException("Error al obtener el estado del producto", e);
         }
     }
@@ -256,10 +242,10 @@ public class InventarioDao {
         validateCategoria(producto);
 
         if (producto.getNombre().matches(".*[\"'\\p{So}].*")) {
-            throw new IllegalArgumentException("El nombre no debe contener comillas ni emojis.");
+            throw new IllegalArgumentException("El nombre no debe contener comillas ni emojis. \uD83E\uDD23");
         }
         if (producto.getDescripcion().matches(".*[\"'\\p{So}].*")) {
-            throw new IllegalArgumentException("La descripción no debe contener comillas ni emojis.");
+            throw new IllegalArgumentException("La descripción no debe contener comillas ni emojis. \uD83E\uDD23");
         }
     
         String sql = "CALL registrar_producto_por_nombre(?, ?, ?, ?, ?);";
@@ -291,7 +277,7 @@ public class InventarioDao {
             System.out.println("Producto eliminado: " + nombreProducto);
         }
     }
-    private List<String> getCategoriasValidas() throws SQLException {
+    public List<String> getCategoriasValidas() throws SQLException {
         List<String> categorias = new ArrayList<>();
         String sql = "SELECT nombre FROM categorias";
     

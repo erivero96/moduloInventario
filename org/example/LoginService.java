@@ -23,7 +23,6 @@ public class LoginService {
             throw new IllegalArgumentException("El correo no tiene un formato válido.");
         }
 
-
         String sql = "CALL login_usuario(?, ?, ?, ?)";
 
         try (CallableStatement stmt = connection.prepareCall(sql)) {
